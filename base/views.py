@@ -1,10 +1,11 @@
-from django.shortcuts import render
+from django.http import JsonResponse
 
 # Create your views here.
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from base.models import UserData
 from base.serializers import UserDataSerializer
 from base.tmap import get_road_info_api
 
@@ -42,3 +43,18 @@ class LocationAPIVIew(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response("bad", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# 차량이 현재 도로 정보 요청시 가져옴.. 추후 APIkey 사용??
+class RoadInfoAPIView(APIView):
+    def get(self, request):
+        # id가 틀렸을 경우
+        if 'id' not in request.GET:
+            return Response("id bad", status=status.HTTP_400_BAD_REQUEST)
+
+        # 일치하는 id중 가장 최근것
+        query = UserData.objects.filter(user_id__iexact=request.GET['id']).latest("created_at")
+        serializer = UserDataSerializer(query)
+        # print(serializer.data)
+
+        return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
