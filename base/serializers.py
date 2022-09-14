@@ -1,8 +1,14 @@
 from rest_framework import serializers
-from base.models import UserData
+from base.models import Driver, Pedestrian
 
 
-class UserDataSerializer(serializers.ModelSerializer):
+class DriverSerializer(serializers.ModelSerializer):
     class Meta:
-        model = UserData
+        model = Driver
         fields = '__all__'
+
+
+class PedestrianSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pedestrian
+        fields = "__all__"
