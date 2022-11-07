@@ -9,6 +9,7 @@ from base.serializers import DriverSerializer, PedestrianSerializer
 from base.utils import get_road_info_api, get_distance, get_latest
 
 
+# 운전자에게 현재 위치 받아 저장, 주변 보행자 정보 반환
 class DriverAPIVIew(APIView):
     def get(self, request):
         # query string에 필요한 정보가 없을 경우
@@ -18,6 +19,8 @@ class DriverAPIVIew(APIView):
             return Response("lon bad", status=status.HTTP_400_BAD_REQUEST)
         if 'limit' not in request.GET:
             return Response("limit bad", status=status.HTTP_400_BAD_REQUEST)
+        if 'user_id' not in request.GET:
+            return Response("limit bad", status=status.HTTP_400_BAD_REQUEST)
         if request.GET['limit'] not in ["0", "1"]:
             return Response("bad", status=status.HTTP_400_BAD_REQUEST)
 
@@ -26,7 +29,7 @@ class DriverAPIVIew(APIView):
 
         # serialize 데이터
         data = {
-            "user_id": "asdf",
+            "user_id": request.GET['user_id'],
             "limit_speed": res['resultData']['header']['speed'],
             "road_name": res['resultData']['header']['roadName'],
             'longitude': float(request.GET['lon']),
@@ -42,6 +45,7 @@ class DriverAPIVIew(APIView):
             r_data = []
             check_id = []
             serializer.save()
+            print(data)
             # created_at__gte=datetime.datetime.now()-datetime.timedelta(minutes=1)
             queries = Pedestrian.objects.filter(longitude__gte=data['longitude']-0.005,
                                                 longitude__lte=data['longitude']+0.005,
@@ -68,7 +72,7 @@ class DriverAPIVIew(APIView):
         return Response("bad", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# 차량이 현재 도로 정보 요청시 가져옴.. 추후 APIkey 사용??
+# 차량이 현재 도로 정보 요청시 가져옴
 class RoadInfoAPIView(APIView):
     def get(self, request):
         # id가 틀렸을 경우
@@ -78,8 +82,8 @@ class RoadInfoAPIView(APIView):
         # 일치하는 id중 가장 최근것
         query = Driver.objects.filter(user_id__iexact=request.GET['id']).latest("created_at")
         serializer = DriverSerializer(query)
-        # print(serializer.data)
 
+        print(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -91,10 +95,12 @@ class PedestrianAPIView(APIView):
             return Response("lat bad", status=status.HTTP_400_BAD_REQUEST)
         if 'lon' not in request.GET:
             return Response("lon bad", status=status.HTTP_400_BAD_REQUEST)
+        if 'user_id' not in request.GET:
+            return Response("lon bad", status=status.HTTP_400_BAD_REQUEST)
 
         # serialize 데이터
         data = {
-            "user_id": "temp2",
+            "user_id": request.GET['user_id'],
             'longitude': float(request.GET['lon']),
             'latitude': float(request.GET['lat']),
         }
@@ -103,6 +109,7 @@ class PedestrianAPIView(APIView):
 
         if serializer.is_valid():
             serializer.save()
+            print(data)
             return Response({"is_success": "success"}, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
